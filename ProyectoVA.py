@@ -9,31 +9,29 @@ import sys
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 
 ''' ***********************Lógica de la lectura del texto*************************************'''
+#Método para rotar imágenes, modifica los bordes para tener la imagen completa
 def rotate_bound(image, angle):
-    # grab the dimensions of the image and then determine the
-    # center
+    # obtienen los bordes
+    
     (h, w) = image.shape[:2]
     (cX, cY) = (w // 2, h // 2)
 
-    # grab the rotation matrix (applying the negative of the
-    # angle to rotate clockwise), then grab the sine and cosine
-    # (i.e., the rotation components of the matrix)
+    # matriz de rotación
     M = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
     cos = np.abs(M[0, 0])
     sin = np.abs(M[0, 1])
 
-    # compute the new bounding dimensions of the image
+    # nuevos bordes de la imagen
     nW = int((h * sin) + (w * cos))
     nH = int((h * cos) + (w * sin))
 
-    # adjust the rotation matrix to take into account translation
     M[0, 2] += (nW / 2) - cX
     M[1, 2] += (nH / 2) - cY
 
-    # perform the actual rotation and return the image
+    # rotación
     return cv2.warpAffine(image, M, (nW, nH))
 
-
+#Método para quitar los saltos de línea presentes en el texto
 def quitarSaltos(texto):
     lst = []
     for pos, char in enumerate(texto):
@@ -45,7 +43,7 @@ def quitarSaltos(texto):
     txt = "".join(lst)
     return txt
 
-
+#Método que lee en voz alta una variable string
 def textoAaudio(texto):
     engine = pyttsx3.init()
     rate = engine.getProperty('rate')
@@ -53,7 +51,7 @@ def textoAaudio(texto):
     engine.say(texto)
     engine.runAndWait()
 
-
+#Método que extrae el texto de una imagen llamada prueba.PNG 
 def obtenerTexto():
     img = cv2.imread('prueba.PNG')
     img = rotate_bound(img, 90) 
@@ -64,7 +62,7 @@ def obtenerTexto():
     print(txt)
     return txt
 
-
+#Método que invoca los anteriores en el orden para transformar imagen a voz.
 def leer():
     txt = obtenerTexto()
     txt = quitarSaltos(txt)
@@ -94,14 +92,14 @@ class Aplicacion(App):
         
         camara = Camera(play=True, index=1, resolution=(640,480), size=(640,480),pos = (10,0))
         wdg.add_widget(camara);
-        
+        #Configuración del botón que toma la foto y lee el contenido
         btnLeer = Button()
         btnLeer.text = "Leer"
         btnLeer.pos = (660,150)
         btnLeer.size = (100, 100)
         wdg.add_widget(btnLeer)        
         btnLeer.bind(on_press=self.ac_btn_leer)
-        
+        #Configuración del botón que permite finalizar la ejecución del programa
         btnSalir = Button()
         btnSalir.text = "Salir"
         btnSalir.pos = (660,275)
@@ -110,12 +108,12 @@ class Aplicacion(App):
         btnSalir.bind(on_press=self.ac_btn_salir)
         
         return wdg
-        
+        #Método para que cuando se presione el botón Leer, tome la foto y la procese hasta leerla en voz alta.
     def ac_btn_leer(self, *args):
         camara.export_to_png('prueba.PNG')
         print("Foto tomada")
         leer()
-        
+        #Método para finalizar la ejecución
     def ac_btn_salir(self, *args):
         Aplicacion.get_running_app().stop()
         
